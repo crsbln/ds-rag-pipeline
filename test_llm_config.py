@@ -74,6 +74,47 @@ class ProviderTests(unittest.TestCase):
             self.assertIsNone(options["model_kwargs"]["models"])
             self.assertIsNone(options["model_kwargs"]["retries"])
 
+    def test_ollama_runs_locally_without_any_key(self):
+        with (
+            patch.dict(os.environ, {"LLM_PROVIDER": "ollama"}, clear=True),
+            patch.object(llm_config, "init_chat_model") as initialize,
+        ):
+            llm_config.create_chat_model(temperature=0.2, max_tokens=256)
+            options = initialize.call_args.kwargs
+            self.assertEqual(options["model_provider"], "ollama")
+            self.assertEqual(options["model"], "qwen3.5:4b")
+            self.assertEqual(options["base_url"], "http://localhost:11434")
+            self.assertEqual(options["temperature"], 0.2)
+            self.assertEqual(options["num_predict"], 256)
+            self.assertIs(options["reasoning"], False)
+            self.assertNotIn("api_key", options)
+
+    def test_ollama_model_and_address_can_be_overridden(self):
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "LLM_PROVIDER": "Ollama ",
+                    "OLLAMA_MODEL": "qwen3.5:2b",
+                    "OLLAMA_BASE_URL": "http://127.0.0.1:11500",
+                },
+                clear=True,
+            ),
+            patch.object(llm_config, "init_chat_model") as initialize,
+        ):
+            llm_config.create_chat_model()
+            options = initialize.call_args.kwargs
+            self.assertEqual(options["model"], "qwen3.5:2b")
+            self.assertEqual(options["base_url"], "http://127.0.0.1:11500")
+            self.assertEqual(options["num_predict"], 1024)
+
+    def test_ollama_done_reason_counts_as_finish_reason(self):
+        finished = AIMessage(content="Answer", response_metadata={"done_reason": "stop"})
+        self.assertEqual(llm_config.response_text(finished), "Answer")
+        cut_off = AIMessage(content="Ans", response_metadata={"done_reason": "length"})
+        with self.assertRaises(ValueError):
+            llm_config.response_text(cut_off)
+
     def test_visible_text_excludes_reasoning(self):
         message = AIMessage(
             content=[
