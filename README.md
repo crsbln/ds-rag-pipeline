@@ -38,6 +38,18 @@ Start with the concepts, build the pipeline from scratch, practise it on real do
 | [**pyproject.toml**](pyproject.toml) | Project configuration and dependencies. |
 | [**uv.lock**](uv.lock) | Dependency lock file. |
 
+## My work
+
+Status on 2026-11-27. This was a delegated pass by Claude; the owner's own review is still pending.
+
+- **All four notebooks are executed** top to bottom, with their outputs saved. They ran on a small local model (`qwen3.5:4b` through Ollama) instead of Groq, and on the local embedding model `all-mpnet-base-v2`. A note at the top of each notebook says so. No API key was used.
+- **`llm_config.py` has a new `ollama` provider** that needs no key. The four cloud providers work as before. `test_llm_config.py` has three new tests; run all nine with `uv run python -m unittest test_llm_config`.
+- **Notebook 3 (exercise): all four exercises and the three reflection questions are answered.** The cleaning function is six small rules. An extra cell measures each rule alone, to answer the first reflection question with numbers.
+- **Notebook 4, Step 6 (your turn) is solved** on the paracetamol leaflet: the same question in English and in German, the retrieval scores behind both answers, and one answer checked against the leaflet text.
+- **Notebook 5 (exercise): all three exercises and the three reflection questions are answered.** An extra cell asks the same question without retrieval, to show what the retrieved context changes.
+- Cells marked **Extra** and notes that start with **Our run** are additions. The lesson text and the lesson code are unchanged, apart from the two "Our run" cells at the top of each notebook that select the local model.
+- The Qdrant index folders (`vector_databases/`) are rebuilt by notebook 4 and are not in the repository.
+
 ## Setup
 
 Qdrant runs locally in process; no separate server or Docker container is needed.
@@ -117,6 +129,7 @@ cp .env.example .env
 - **Mistral (alternative):** Set `MISTRAL_API_KEY` from [Mistral AI](https://console.mistral.ai/api-keys); the default is `MISTRAL_MODEL=ministral-14b-latest`.
 - **OpenRouter (optional):** Set `OPENROUTER_API_KEY`. The default `google/gemma-4-26b-a4b-it:free` has `openrouter/free` as a server-side backup, configured by `OPENROUTER_FALLBACK_MODEL`. Free accounts currently share [50 requests/day across free models](https://openrouter.ai/pricing); changing models does not reset this quota.
 - **Google AI Studio (optional):** Set `GOOGLE_API_KEY` and `GOOGLE_MODEL=gemma-4-26b-a4b-it` for direct [Gemma access](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api), independent of OpenRouter. Free [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) vary by project and model; use only non-sensitive exercise data on the free tier.
+- **Ollama (local, optional):** Set `LLM_PROVIDER=ollama`. No key and no account: the model runs on your own computer through [Ollama](https://ollama.com). Defaults: `OLLAMA_MODEL=qwen3.5:4b` and `OLLAMA_BASE_URL=http://localhost:11434`. Local calls get a longer timeout (300 seconds) and the model's hidden "thinking" text is switched off.
 
 `llm_config.py` uses `init_chat_model` to select the native adapter. Prompts and application logic stay the same; `*_MODEL` overrides the selected model. Calls have a 30-second timeout, no automatic retries, and a bounded output budget. A different model must support the tools or structured outputs the exercise needs. Restart the kernel after editing `.env`.
 
